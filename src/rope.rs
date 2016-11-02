@@ -1,5 +1,5 @@
-use bytes::{Buf, BufMut, Bytes, Source, ByteBuf};
-use std::{cmp, ops};
+use bytes::{Buf, BufMut, IntoBuf, Bytes, Source, ByteBuf};
+use std::{cmp, fmt, ops};
 use std::io::Cursor;
 use std::sync::Arc;
 
@@ -297,9 +297,28 @@ impl<'a> Source for &'a Rope {
     }
 }
 
+impl<'a> From<&'a Rope> for Rope {
+    fn from(src: &'a Rope) -> Rope {
+        src.clone()
+    }
+}
+
 impl From<Bytes> for Rope {
     fn from(src: Bytes) -> Rope {
         Rope::new(Node::Leaf(src), Node::Empty)
+    }
+}
+
+impl<'a> From<&'a [u8]> for Rope {
+    fn from(src: &'a [u8]) -> Rope {
+        Rope::from_slice(src)
+    }
+}
+
+impl From<Vec<u8>> for Rope {
+    fn from(src: Vec<u8>) -> Rope {
+        let bytes: Bytes = src.into();
+        bytes.into()
     }
 }
 
@@ -351,6 +370,48 @@ impl ops::Index<usize> for Node {
         }
     }
 }
+
+impl<'a> IntoBuf for &'a Rope {
+    type Buf = RopeBuf<'a>;
+
+    fn into_buf(self) -> Self::Buf {
+        self.buf()
+    }
+}
+
+impl<T> cmp::PartialEq<T> for Rope
+    where for<'a> &'a T: IntoBuf
+{
+    fn eq(&self, other: &T) -> bool {
+        let mut buf1 = self.buf();
+        let mut buf2 = other.into_buf();
+
+        if buf1.remaining() != buf2.remaining() {
+            return false;
+        }
+
+        while buf1.has_remaining() {
+            let len;
+            {
+                let b1 = buf1.bytes();
+                let b2 = buf2.bytes();
+
+                len = cmp::min(b1.len(), b2.len());
+
+                if b1[..len] != b2[..len] {
+                    return false;
+                }
+            }
+
+            buf1.advance(len);
+            buf2.advance(len);
+        }
+
+        true
+    }
+}
+
+impl cmp::Eq for Rope {}
 
 /*
  *
@@ -641,5 +702,43 @@ impl From<Partial> for Node {
             Partial::Node(v) => v,
             Partial::Rope(v) => Node::from(v),
         }
+    }
+}
+
+impl fmt::Debug for Rope {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let mut buf = self.buf();
+
+        try!(write!(fmt, "Rope[len={}; ", self.len()));
+
+        let mut rem = 128;
+
+        while buf.has_remaining() {
+            let byte = buf.get_u8();
+
+            if rem > 0 {
+                if is_ascii(byte) {
+                    try!(write!(fmt, "{}", byte as char));
+                } else {
+                    try!(write!(fmt, "\\x{:02X}", byte));
+                }
+
+                rem -= 1;
+            } else {
+                try!(write!(fmt, " ... "));
+                break;
+            }
+        }
+
+        try!(write!(fmt, "]"));
+
+        Ok(())
+    }
+}
+
+fn is_ascii(byte: u8) -> bool {
+    match byte {
+        10 | 13 | 32...126 => true,
+        _ => false,
     }
 }
