@@ -1,4 +1,4 @@
-use bytes::{Buf, BufMut, IntoBuf, Bytes, Source, ByteBuf};
+use bytes::{Buf, BufMut, IntoBuf, Bytes, BytesMut, Source, ByteBuf};
 use std::{cmp, fmt, ops};
 use std::io::Cursor;
 use std::sync::Arc;
@@ -306,6 +306,12 @@ impl<'a> From<&'a Rope> for Rope {
 impl From<Bytes> for Rope {
     fn from(src: Bytes) -> Rope {
         Rope::new(Node::Leaf(src), Node::Empty)
+    }
+}
+
+impl From<BytesMut> for Rope {
+    fn from(src: BytesMut) -> Rope {
+        Rope::new(Node::Leaf(src.into()), Node::Empty)
     }
 }
 

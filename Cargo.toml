@@ -1,0 +1,22 @@
+[package]
+
+name          = "bytes-more"
+version       = "0.4.0-dev"
+license       = "MIT"
+authors       = ["Carl Lerche <me@carllerche.com>"]
+description   = "Extra types and traits for working with bytes"
+documentation = "https://carllerche.github.io/bytes/bytes"
+homepage      = "https://github.com/carllerche/bytes-more"
+repository    = "https://github.com/carllerche/bytes-more"
+readme        = "README.md"
+keywords      = ["buffers", "rope", "io"]
+exclude       = [
+    ".gitignore",
+    ".travis.yml",
+    "deploy.sh",
+    "bench/**/*",
+    "test/**/*"
+]
+
+[dependencies]
+bytes = { path = "/Users/carllerche/Code/mine/bytes" }
