@@ -19,4 +19,4 @@ exclude       = [
 ]
 
 [dependencies]
-bytes = { path = "/Users/carllerche/Code/mine/bytes" }
+bytes = { git = "https://github.com/carllerche/bytes", branch = "refactor" }
