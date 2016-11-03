@@ -2,10 +2,10 @@
 
 extern crate bytes;
 
-mod block_buf;
+mod block;
 mod ring;
 mod rope;
 
-pub use block_buf::{BlockBuf, BlockBufCursor};
+pub use block::{BlockBuf, BlockBufCursor};
 pub use ring::RingBuf;
 pub use rope::{Rope, RopeBuf};
